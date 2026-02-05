@@ -1,13 +1,18 @@
 "use client"
 
+import { SelectItem } from "@/components/ui/select"
+import { SelectContent } from "@/components/ui/select"
+import { SelectValue } from "@/components/ui/select"
+import { SelectTrigger } from "@/components/ui/select"
+import { Select } from "@/components/ui/select"
 import React from "react"
-
 import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { DAYS_OF_WEEK } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -17,13 +22,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { toast } from "sonner"
 
 interface AddMealDialogProps {
@@ -35,10 +33,27 @@ export function AddMealDialog({ selectedDay, onMealAdded }: AddMealDialogProps) 
   const [open, setOpen] = useState(false)
   const [name, setName] = useState("")
   const [time, setTime] = useState("")
-  const [dayOfWeek, setDayOfWeek] = useState(String(selectedDay))
+  const [selectedDays, setSelectedDays] = useState<number[]>([selectedDay])
   const [items, setItems] = useState<string[]>([""])
   const [loading, setLoading] = useState(false)
+  const [dayOfWeek, setDayOfWeek] = useState(String(selectedDay))
   const supabase = createClient()
+
+  const allDaysSelected = selectedDays.length === 7
+
+  function toggleDay(day: number) {
+    setSelectedDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
+    )
+  }
+
+  function toggleAllDays() {
+    if (allDaysSelected) {
+      setSelectedDays([selectedDay])
+    } else {
+      setSelectedDays([0, 1, 2, 3, 4, 5, 6])
+    }
+  }
 
   function addItemField() {
     setItems([...items, ""])
@@ -62,6 +77,10 @@ export function AddMealDialog({ selectedDay, onMealAdded }: AddMealDialogProps) 
       toast.error("Preencha o nome e o horario")
       return
     }
+    if (selectedDays.length === 0) {
+      toast.error("Selecione pelo menos um dia da semana")
+      return
+    }
 
     setLoading(true)
 
@@ -75,36 +94,41 @@ export function AddMealDialog({ selectedDay, onMealAdded }: AddMealDialogProps) 
       return
     }
 
-    // Create meal
-    const { data: meal, error: mealError } = await supabase
-      .from("meals")
-      .insert({
-        user_id: user.id,
-        name,
-        scheduled_time: time,
-        day_of_week: Number.parseInt(dayOfWeek),
-      })
-      .select()
-      .single()
+    // Create a meal for each selected day
+    const mealInserts = selectedDays.map((day) => ({
+      user_id: user.id,
+      name,
+      scheduled_time: time,
+      day_of_week: day,
+    }))
 
-    if (mealError) {
+    const { data: meals, error: mealError } = await supabase
+      .from("meals")
+      .insert(mealInserts)
+      .select()
+
+    if (mealError || !meals) {
       toast.error("Erro ao criar refeicao", {
-        description: mealError.message,
+        description: mealError?.message,
       })
       setLoading(false)
       return
     }
 
-    // Create meal items
+    // Create meal items for each created meal
     const validItems = items.filter((item) => item.trim() !== "")
     if (validItems.length > 0) {
-      const { error: itemsError } = await supabase.from("meal_items").insert(
+      const itemInserts = meals.flatMap((meal) =>
         validItems.map((description) => ({
           meal_id: meal.id,
           user_id: user.id,
           description: description.trim(),
         }))
       )
+
+      const { error: itemsError } = await supabase
+        .from("meal_items")
+        .insert(itemInserts)
 
       if (itemsError) {
         toast.error("Erro ao adicionar itens", {
@@ -113,9 +137,16 @@ export function AddMealDialog({ selectedDay, onMealAdded }: AddMealDialogProps) 
       }
     }
 
-    toast.success(`${name} adicionado!`)
+    const dayLabel =
+      selectedDays.length === 7
+        ? "todos os dias"
+        : selectedDays.length === 1
+          ? DAYS_OF_WEEK[selectedDays[0]]
+          : `${selectedDays.length} dias`
+    toast.success(`${name} adicionado para ${dayLabel}!`)
     setName("")
     setTime("")
+    setSelectedDays([selectedDay])
     setItems([""])
     setOpen(false)
     setLoading(false)
@@ -127,7 +158,7 @@ export function AddMealDialog({ selectedDay, onMealAdded }: AddMealDialogProps) 
       open={open}
       onOpenChange={(isOpen) => {
         setOpen(isOpen)
-        if (isOpen) setDayOfWeek(String(selectedDay))
+        if (isOpen) setSelectedDays([selectedDay])
       }}
     >
       <DialogTrigger asChild>
@@ -167,31 +198,50 @@ export function AddMealDialog({ selectedDay, onMealAdded }: AddMealDialogProps) 
                 required
               />
             </div>
-            <div className="flex gap-3">
-              <div className="flex flex-1 flex-col gap-2">
-                <Label htmlFor="meal-time">Horario</Label>
-                <Input
-                  id="meal-time"
-                  type="time"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                  required
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="meal-time">Horario</Label>
+              <Input
+                id="meal-time"
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label>Dias da semana</Label>
+              <div className="flex items-center gap-2 rounded-md border border-border p-3">
+                <Checkbox
+                  id="all-days"
+                  checked={allDaysSelected}
+                  onCheckedChange={toggleAllDays}
                 />
+                <label
+                  htmlFor="all-days"
+                  className="cursor-pointer text-sm font-medium text-foreground"
+                >
+                  Todos os dias
+                </label>
               </div>
-              <div className="flex flex-1 flex-col gap-2">
-                <Label>Dia da semana</Label>
-                <Select value={dayOfWeek} onValueChange={setDayOfWeek}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DAYS_OF_WEEK.map((day, index) => (
-                      <SelectItem key={day} value={String(index)}>
-                        {day}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-2">
+                {DAYS_OF_WEEK.map((day, index) => (
+                  <div
+                    key={day}
+                    className="flex items-center gap-2 rounded-md border border-border px-3 py-2"
+                  >
+                    <Checkbox
+                      id={`day-${index}`}
+                      checked={selectedDays.includes(index)}
+                      onCheckedChange={() => toggleDay(index)}
+                    />
+                    <label
+                      htmlFor={`day-${index}`}
+                      className="cursor-pointer text-sm text-foreground"
+                    >
+                      {day}
+                    </label>
+                  </div>
+                ))}
               </div>
             </div>
             <div className="flex flex-col gap-2">

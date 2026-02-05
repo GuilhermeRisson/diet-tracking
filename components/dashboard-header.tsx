@@ -1,13 +1,15 @@
 "use client"
 
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 
 export function DashboardHeader() {
   const router = useRouter()
+  const pathname = usePathname()
   const supabase = createClient()
+  const isOnDashboardHome = pathname === "/dashboard"
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -20,6 +22,28 @@ export function DashboardHeader() {
     <header className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
         <div className="flex items-center gap-3">
+          {!isOnDashboardHome && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => router.push("/dashboard")}
+              className="mr-1 text-muted-foreground hover:text-foreground"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-5 w-5"
+              >
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+              <span className="sr-only">Voltar</span>
+            </Button>
+          )}
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -39,28 +63,30 @@ export function DashboardHeader() {
           <h1 className="text-lg font-bold text-foreground">DietaCheck</h1>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push("/dashboard/historico")}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="mr-1.5 h-4 w-4"
+          {isOnDashboardHome && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push("/dashboard/historico")}
+              className="text-muted-foreground hover:text-foreground"
             >
-              <path d="M3 3v5h5" />
-              <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8" />
-              <path d="M12 7v5l4 2" />
-            </svg>
-            Historico
-          </Button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="mr-1.5 h-4 w-4"
+              >
+                <path d="M3 3v5h5" />
+                <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8" />
+                <path d="M12 7v5l4 2" />
+              </svg>
+              Historico
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"
