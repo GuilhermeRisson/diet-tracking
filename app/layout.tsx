@@ -1,15 +1,28 @@
-import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import React from "react"
+import type { Metadata, Viewport } from "next"
+import { Inter, Space_Grotesk } from "next/font/google"
+import { Toaster } from "@/components/ui/sonner"
 
-import './globals.css'
+import "./globals.css"
 
-const _geist = Geist({ subsets: ['latin'] })
-const _geistMono = Geist_Mono({ subsets: ['latin'] })
+const _inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
+const _spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-space-grotesk",
+})
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.app',
+  title: "DietaCheck - Controle sua Dieta",
+  description:
+    "Acompanhe suas refeicoes, receba lembretes e mantenha o controle da sua dieta.",
+}
+
+export const viewport: Viewport = {
+  themeColor: "#1a9960",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 }
 
 export default function RootLayout({
@@ -18,8 +31,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className="font-sans antialiased">{children}</body>
+    <html lang="pt-BR">
+      <body className="font-sans antialiased">
+        {children}
+        <Toaster richColors position="top-center" />
+      </body>
     </html>
   )
 }
