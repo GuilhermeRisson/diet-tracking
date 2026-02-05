@@ -34,18 +34,29 @@ ALTER TABLE public.meal_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.check_ins ENABLE ROW LEVEL SECURITY;
 
 -- Meals policies
+DROP POLICY IF EXISTS "meals_select_own" ON public.meals;
 CREATE POLICY "meals_select_own" ON public.meals FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "meals_insert_own" ON public.meals;
 CREATE POLICY "meals_insert_own" ON public.meals FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "meals_update_own" ON public.meals;
 CREATE POLICY "meals_update_own" ON public.meals FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "meals_delete_own" ON public.meals;
 CREATE POLICY "meals_delete_own" ON public.meals FOR DELETE USING (auth.uid() = user_id);
 
 -- Meal items policies
+DROP POLICY IF EXISTS "meal_items_select_own" ON public.meal_items;
 CREATE POLICY "meal_items_select_own" ON public.meal_items FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "meal_items_insert_own" ON public.meal_items;
 CREATE POLICY "meal_items_insert_own" ON public.meal_items FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "meal_items_update_own" ON public.meal_items;
 CREATE POLICY "meal_items_update_own" ON public.meal_items FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "meal_items_delete_own" ON public.meal_items;
 CREATE POLICY "meal_items_delete_own" ON public.meal_items FOR DELETE USING (auth.uid() = user_id);
 
 -- Check-ins policies
+DROP POLICY IF EXISTS "check_ins_select_own" ON public.check_ins;
 CREATE POLICY "check_ins_select_own" ON public.check_ins FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "check_ins_insert_own" ON public.check_ins;
 CREATE POLICY "check_ins_insert_own" ON public.check_ins FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "check_ins_delete_own" ON public.check_ins;
 CREATE POLICY "check_ins_delete_own" ON public.check_ins FOR DELETE USING (auth.uid() = user_id);
