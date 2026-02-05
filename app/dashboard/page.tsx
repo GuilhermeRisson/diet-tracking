@@ -10,6 +10,7 @@ import { DaySelector } from "@/components/day-selector"
 import { MealCard } from "@/components/meal-card"
 import { AddMealDialog } from "@/components/add-meal-dialog"
 import { useNotifications } from "@/hooks/use-notifications"
+import { PwaInstallPrompt } from "@/components/pwa-install-prompt"
 
 const supabase = createClient()
 
@@ -93,6 +94,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-background">
       <DashboardHeader />
+      <PwaInstallPrompt />
 
       <main className="mx-auto max-w-4xl px-4 py-6">
         {/* Day Selector */}
